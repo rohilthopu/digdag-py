@@ -8,14 +8,6 @@ By prioritizing workflow definition generating in code, it is much easier to gen
 
 Additionally, `digdag-py` provides a simple client for interacting with the Digdag REST API server on your instance.
 
-## Inspiration
-
-I have used Digdag professionally in my work for many years, and although execution on the Digdag platform is good, the developer tooling is definitely lacking.
-
-When you have hundreds of workflow files, all written in YAML, it becomes very difficult to manipulate each individual file when large scale changes occur.
-
-Additionally, when the same basic tasks needed to be executed for hundreds of task combinations, it can be extremely cumbersome writing or copying dig files by hand.
-
 ## Overview
 
 `digdag-py` attempts to provide the following:
@@ -24,6 +16,16 @@ Additionally, when the same basic tasks needed to be executed for hundreds of ta
 2. Pydantic domain models mapped to each type of API response
 3. Pydantic models that abstract Project, Workflow, and Task configurations in Digdag
 4. Tools to export project archives and workflows that can be uploaded to a Digdag instance through the REST API client.
+
+In order to support translating Pydantic models to YAML, `digdag-py` implements a custom YAML exporter that adheres to the Digdag workflow definition spec.
+
+## Inspiration
+
+I have used Digdag professionally in my work for many years, and although execution on the Digdag platform is good, the developer tooling is definitely lacking.
+
+When you have hundreds of workflow files, all written in YAML, it becomes very difficult to manipulate each individual file when large scale changes occur.
+
+Additionally, when the same basic tasks needed to be executed for hundreds of task combinations, it can be extremely cumbersome writing or copying dig files by hand.
 
 ## Basic Workflow Example
 
