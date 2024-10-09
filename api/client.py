@@ -24,6 +24,9 @@ class DigdagClient:
         self,
         host: str,
     ) -> None:
+        # Very weak check that the provided host is even remotely correct. Okay to assume that
+        # the user provides the correct base url for their digdag instance, optionally already
+        # pointing to the /api path.
         if host.endswith("/"):
             host = host.rstrip("/")
 
@@ -34,11 +37,14 @@ class DigdagClient:
 
     def _make_url(
         self,
-        *path_parts: str | int,
+        *parts: str | int,
     ) -> str:
-        full_path = "/".join([str(item) for item in path_parts])
+        # Digdag API paths are pretty predictable, so just shortcut their construction by joining
+        # a bunch of parts, either str/int, together by a back slash.
+        full_path = "/".join([str(item).lstrip("/") for item in parts])
         if not full_path.startswith("/"):
             full_path = "/" + full_path
+
         return self.host + full_path
 
     def _get(
@@ -93,17 +99,26 @@ class DigdagClient:
             data=data,
         )
 
+    # Collection endpoint for all workflows in the entire Digdag instance. These are wrapped in
+    # a container object in the API response and is also done so here.
     def get_workflows(self) -> Workflows:
-        return Workflows.model_validate(
-            self._get(
-                self._make_url("/workflows"),
-            ).json()
+        """
+        Retreive all workflows for all projects in the Digdag instance.
+        """
+        response = self._get(
+            self._make_url(
+                "/workflows",
+            ),
         )
+        return Workflows.model_validate(response.json())
 
     def get_workflow(
         self,
         id: str,
     ) -> Workflow:
+        """
+        Retrieve an individual workflow by its ID.
+        """
         response = self._get(
             self._make_url(
                 "/workflows",
@@ -112,13 +127,10 @@ class DigdagClient:
         )
         return Workflow.model_validate(response.json())
 
-    def get_workflow_by_name(
-        self,
-        name: str,
-    ) -> Workflow:
-        return self.get_workflows().filter_by_name(name)
-
     def get_sessions(self) -> Sessions:
+        """
+        Get all workflow sessions.
+        """
         response = self._get(
             self._make_url(
                 "/sessions",
@@ -130,6 +142,9 @@ class DigdagClient:
         self,
         id: str,
     ) -> Session:
+        """
+        Get an individual session by its ID.
+        """
         response = self._get(
             self._make_url(
                 "/sessions",
@@ -142,6 +157,9 @@ class DigdagClient:
         self,
         id: str,
     ) -> SessionAttempts:
+        """
+        Retrieve all attempts run for a given session ID.
+        """
         response = self._get(
             self._make_url(
                 "sessions",
@@ -152,6 +170,9 @@ class DigdagClient:
         return SessionAttempts.model_validate(response.json())
 
     def get_attempts(self) -> Attempts:
+        """
+        Retrieve the last 100 attempts for all workflows for all projects.
+        """
         response = self._get(
             self._make_url(
                 "/attempts",
@@ -159,19 +180,13 @@ class DigdagClient:
         )
         return Attempts.model_validate(response.json())
 
-    def get_attempts_by_workflow_name(
-        self,
-        name: str,
-    ) -> Attempts:
-        attempts = self.get_attempts()
-        return Attempts(
-            attempts=[item for item in attempts.attempts if item.workflow.name == name],
-        )
-
     def get_attempt(
         self,
         id: str,
     ) -> WorkflowAttempt:
+        """
+        Retrieve an attempt by its ID.
+        """
         response = self._get(
             self._make_url(
                 "attempts",
@@ -184,6 +199,9 @@ class DigdagClient:
         self,
         parameters: AttemptParameters,
     ) -> Attempt:
+        """
+        Start an attempt using an instance of AttemptParameters.
+        """
         response = self._put(
             self._make_url("/attempts"),
             headers={
@@ -235,16 +253,31 @@ class DigdagClient:
         revision: str | None = None,
         schedule_from: str | None = None,
     ) -> Project:
+        """
+        Upload an entire Digdag project reference tagged to a specific revision. The project will be compiled
+        into a zip archive and uploaded to the Digdag host.
+
+        If a revision is not proided, a UUIDv4 value will be generated in its place.
+
+        Optionally, start scheduling workflows for the revision from a provided ISO8601 timestamp.
+        """
         revision = revision or str(uuid.uuid4())
         tarball_content = dig.create_project_archive(project)
         return self._upload_project_archive(
-            tarball_content, project.name, revision, schedule_from
+            tarball_content,
+            project.name,
+            revision,
+            schedule_from,
         )
 
     def delete_project(
         self,
         id: str,
     ) -> Project:
+        """
+        Delete a project by its ID. This only deletes the project archives and workflows but preserves
+        any session history.
+        """
         response = self._delete(
             self._make_url(
                 "projects",
@@ -257,6 +290,12 @@ class DigdagClient:
         self,
         name: str | None = None,
     ) -> Projects:
+        """
+        Retrieve all projects.
+
+        Optionally, if a name is provided, retrieve specifically the project name requested. A collection is still
+        returned even when a name is provided.
+        """
         params = {}
 
         if name is not None:
@@ -274,6 +313,9 @@ class DigdagClient:
         self,
         id: str,
     ) -> Project:
+        """
+        Retrieve an individual project by ID.
+        """
         response = self._get(
             self._make_url(
                 "projects",
@@ -288,12 +330,20 @@ class DigdagClient:
         self,
         name: str,
     ) -> Project:
+        """
+        Retrieve a project by name.
+
+        This is a shortcut method that calls the full colllection of projects and filters by the provided name.
+        """
         return self.get_projects().filter_by_name(name)
 
     def get_project_workflows(
         self,
         id: str,
     ) -> Workflows:
+        """
+        Retrieve all workflows for a project by project ID.
+        """
         response = self._get(
             self._make_url(
                 "projects",
@@ -308,6 +358,9 @@ class DigdagClient:
         name: str,
         workflow_name: str,
     ) -> Workflow:
+        """
+        Retrieve a specific workflow from a project by project name and workflow name.
+        """
         project = self.get_project_by_name(name)
         response = self._get(
             self._make_url(
@@ -320,6 +373,9 @@ class DigdagClient:
         return Workflow.model_validate(response.json())
 
     def get_project_revisions(self, id: str) -> ProjectRevisions:
+        """
+        Retrieve all revisions of a project by project ID.
+        """
         response = self._get(
             self._make_url(
                 "projects",
