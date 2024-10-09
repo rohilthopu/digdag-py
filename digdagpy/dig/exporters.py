@@ -235,7 +235,7 @@ class WorkflowExporter:
         return f.getvalue()
 
 
-class ProjectArchiver:
+class ProjectExporter:
     def _create_dig_archive(self, project: pathlib.Path) -> bytes:
         with tempfile.TemporaryFile() as temp:
             with tarfile.open(
@@ -250,7 +250,7 @@ class ProjectArchiver:
             content = temp.read()
         return content
 
-    def archive(self, project: WorkflowProject) -> bytes:
+    def export(self, project: WorkflowProject) -> bytes:
         if project.image is not None:
             project.add_workflow(
                 Workflow(

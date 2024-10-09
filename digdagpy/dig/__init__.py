@@ -1,4 +1,4 @@
-from .exporters import WorkflowExporter, ProjectArchiver
+from .exporters import WorkflowExporter, ProjectExporter
 from .models import (
     ErrorTask,
     NamedTask,
@@ -19,7 +19,7 @@ from .models import (
 
 __all__ = [
     "WorkflowExporter",
-    "ProjectArchiver",
+    "ProjectExporter",
     "ErrorTask",
     "NamedTask",
     "CommandTask",

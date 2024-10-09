@@ -2,7 +2,7 @@ import uuid
 import requests
 from typing import Any
 
-from ..dig.exporters import WorkflowExporter, ProjectArchiver
+from ..dig.exporters import WorkflowExporter, ProjectExporter
 from ..dig.models import WorkflowProject
 from .models import (
     Attempts,
@@ -262,9 +262,9 @@ class DigdagClient:
 
         Optionally, start scheduling workflows for the revision from a provided ISO8601 timestamp.
         """
-        archiver = ProjectArchiver()
+        archiver = ProjectExporter()
         revision = revision or str(uuid.uuid4())
-        tarball_content = archiver.archive(project)
+        tarball_content = archiver.export(project)
         return self._upload_project_archive(
             tarball_content,
             project.name,
