@@ -94,15 +94,15 @@ The following example uses both for loops and conditional task creation/manipula
 from digdagpy.dig import Workflow, WorkflowSchedule, CommandTask, ErrorTask
 
 
-tasks = (
+task_names = (
     "first_task",
     "second_special_task",
     "third_task",
 )
 
 
-for hour_offset, task_name in enumerate(tasks):
-    start_hour_adjusted = 24 - len(tasks) + hour_offset - 1
+for hour_offset, task_name in enumerate(task_names):
+    start_hour_adjusted = 24 - len(task_names) + hour_offset - 1
 
     schedule = WorkflowSchedule(
         daily="{}:00:00".format(start_hour_adjusted),
