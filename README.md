@@ -39,7 +39,7 @@ Workflows have two basic components:
 A basic definition can be seen below.
 
 ```python
-from digdagpy.dig.models import Workflow, CommandTask
+from digdagpy.dig import Workflow, CommandTask
 
 workflow = Workflow(
     name="task-to-be-executed",
@@ -54,13 +54,11 @@ workflow = Workflow(
 
 The defined `workflow` has a single task that will be executed that prints "hello" to the terminal.
 
-In order to see the generated `.dig` file content from this workflow, we can use the `export_workflow` function provided in `python digdagpy.dig.dig`.
+In order to see the generated `.dig` file content from this workflow, we can use the `WorkflowExporter` class provided in `python digdagpy.dig`.
 
 ```python
 
-from digdagpy.dig.models import Workflow, CommandTask
-
-from digdagpy.dig.dig import export_workflow
+from digdagpy.dig import Workflow, CommandTask, WorkflowExporter
 
 workflow = Workflow(
     name="task-to-be-executed",
@@ -72,9 +70,9 @@ workflow = Workflow(
     ]
 )
 
-dig_content: str = export_workflow(
-    workflow,
-)
+
+exporter = WorkflowExporter()
+dig_content: str = exporter.export(workflow)
 
 print(dig_content)
 ```
@@ -93,7 +91,7 @@ timezone: UTC
 The following example uses both for loops and conditional task creation/manipulation to generate a group of workflows that execute one hour apart, sequentially.
 
 ```python
-from digdagpy.dig.models import Workflow, WorkflowSchedule, CommandTask, ErrorTask
+from digdagpy.dig import Workflow, WorkflowSchedule, CommandTask, ErrorTask
 
 
 tasks = (
@@ -332,7 +330,7 @@ The steps to start attempts in Digdag are:
 ### Starting a Simple Attempt
 
 ```python
-from digdag_sdk.api.client import DigdagClient
+from digdagpy.api import DigdagClient
 
 client = DigdagClient(host="<my_digdag_host>")
 
@@ -348,7 +346,7 @@ started_attempt = client.start_attempt(attempt_params)
 ### Starting an attempt with parameters
 
 ```python
-from digdag_sdk.api.client import DigdagClient
+from digdagpy.api import DigdagClient
 
 client = DigdagClient(host="<my_digdag_host>")
 
