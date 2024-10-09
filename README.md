@@ -2,7 +2,7 @@
 
 `digdag-py` is a low dependency wrapper over many of the constructs and functionalities provided through [Digdag](https://www.digdag.io/).
 
-`digdag-py` only relies on two libraries, `Pydantic` and `requests`, to abstract the concepts and directives used in `.dig` files into a code-native friendly way.
+`digdag-py` relies on two libraries, `Pydantic` and `requests`, to abstract the concepts and directives used in `.dig` files into a code-native friendly way.
 
 By prioritizing workflow definition generating in code, it is much easier to generate dynamic workflows using native Python through things like for-loops, list manipulation, and more.
 
