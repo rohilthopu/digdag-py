@@ -16,6 +16,15 @@ When you have hundreds of workflow files, all written in YAML, it becomes very d
 
 Additionally, when the same basic tasks needed to be executed for hundreds of task combinations, it can be extremely cumbersome writing or copying dig files by hand.
 
+## Overview
+
+`digdag-py` attempts to provide the following:
+
+1. A simple Digdag REST API client
+2. Pydantic domain models mapped to each type of API response
+3. Pydantic models that abstract Project, Workflow, and Task configurations in Digdag
+4. Tools to export project archives and workflows that can be uploaded to a Digdag instance through the REST API client.
+
 ## Basic Workflow Example
 
 Workflows in `digdag-py` can be defined using the models found in the `python digdagpy.dig.models` module.
@@ -318,7 +327,6 @@ The steps to start attempts in Digdag are:
 3. Create an attempt parameters config from the workflow
 4. Use the client to start the attempt using the attempt parameters
 
-
 ### Starting a Simple Attempt
 
 ```python
@@ -334,7 +342,6 @@ attempt_params = workflow.create_attempt_parameters()
 
 started_attempt = client.start_attempt(attempt_params)
 ```
-
 
 ### Starting an attempt with parameters
 
@@ -357,6 +364,6 @@ attempt_params = workflow.create_attempt_parameters(
 started_attempt = client.start_attempt(attempt_params)
 ```
 
-Providing a `params` dictionary to the `Workflow.create_attempt_parameters()` method will tell the client to pass the arguments as JSON to the workflow execution. 
+Providing a `params` dictionary to the `Workflow.create_attempt_parameters()` method will tell the client to pass the arguments as JSON to the workflow execution.
 
 Note that this only supports simple types that are supported by YAML. More information can be found in the [Digdag docs](https://docs.digdag.io/workflow_definition.html#using-api)
