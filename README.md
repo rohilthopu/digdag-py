@@ -219,7 +219,7 @@ _error:
 
 ### second_special_task
 
-Notice that with this task, there was a special case in the workflow generation that added some extra functionality online for this task.
+Notice that with this task, there was a special case in the workflow generation that added some extra functionality only for this task.
 
 ```yaml
 timezone: UTC
