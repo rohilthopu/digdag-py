@@ -70,7 +70,7 @@ print(dig_content)
 
 This will generate a YAML output as follows:
 
-```
+```yaml
 timezone: UTC
 
 +print-hello:
@@ -90,6 +90,9 @@ feed_options = (
     "second_special_task",
     "third_task",
 )
+
+
+wf = 
 
 for hour_offset, task_name in enumerate(feed_options):
     start_hour_adjusted = 24 - len(feed_options) + hour_offset - 1
@@ -179,4 +182,87 @@ for hour_offset, task_name in enumerate(feed_options):
             ),
         )
     )
+```
+
+This will generate tasks as follows:
+
+### first_task
+
+```yaml
+timezone: UTC
+
+schedule:
+    daily>: 20:00:00 
+    skip_delayed_by: 1s
+    skip_on_overtime: true
+
++lock-deployment:
+    sh>: python main.py lock-deployment first_task
+
++create:
+    sh>: python main.py create first_task --save
+
++upload:
+    +int:
+        sh>: python main.py upload first_task --source-env prod --destination-env int
+
+    +stg:
+        sh>: python main.py upload first_task --source-env prod --destination-env stg
+
+    +prod:
+        sh>: python main.py upload first_task --source-env prod --destination-env prod
+
++unlock-deployment:
+    sh>: python main.py unlock-deployment first_task
+
+_error:
+    sh>: python main.py unlock-deployment first_task
+```
+
+### second_special_task
+
+Notice that with this task, there was a special case in the workflow generation that added some extra functionality online for this task.
+
+
+```yaml
+timezone: UTC
+
+schedule:
+    daily>: 21:00:00 
+    skip_delayed_by: 1s
+    skip_on_overtime: true
+
++lock-deployment:
+    sh>: python main.py lock-deployment second_special_task
+
++process-special-task:
+    sh>: python main.py create second_special_task --save
+
++upload:
+    +int:
+        +upload:
+            sh>: python main.py upload second_special_task --source-env prod --destination-env int
+
+        +implicit-special-task:
+            sh>: python main.py implicit-task --source-env prod --destination-env int
+
+    +stg:
+        +upload:
+            sh>: python main.py upload second_special_task --source-env prod --destination-env stg
+
+        +implicit-special-task:
+            sh>: python main.py implicit-task --source-env prod --destination-env stg
+
+    +prod:
+        +upload:
+            sh>: python main.py upload second_special_task --source-env prod --destination-env prod
+
+        +implicit-special-task:
+            sh>: python main.py implicit-task --source-env prod --destination-env prod
+
++unlock-deployment:
+    sh>: python main.py unlock-deployment second_special_task
+
+_error:
+    sh>: python main.py unlock-deployment second_special_task
 ```
