@@ -190,7 +190,7 @@ This will generate tasks as follows:
 timezone: UTC
 
 schedule:
-    daily>: 20:00:00 
+    daily>: 20:00:00
     skip_delayed_by: 1s
     skip_on_overtime: true
 
@@ -221,12 +221,11 @@ _error:
 
 Notice that with this task, there was a special case in the workflow generation that added some extra functionality online for this task.
 
-
 ```yaml
 timezone: UTC
 
 schedule:
-    daily>: 21:00:00 
+    daily>: 21:00:00
     skip_delayed_by: 1s
     skip_on_overtime: true
 
@@ -273,7 +272,7 @@ This task is identical to the first.
 timezone: UTC
 
 schedule:
-    daily>: 22:00:00 
+    daily>: 22:00:00
     skip_delayed_by: 1s
     skip_on_overtime: true
 
@@ -300,5 +299,64 @@ _error:
     sh>: python main.py unlock-deployment third_task
 ```
 
-
 Notice how the three tasks all run exactly one hour apart, as calculated using a for loop in Python.
+
+## REST API Client
+
+`digdag-py` also provides a simple REST API client to interact with the Digdag API.
+
+Some features, such as starting attempts, are also abstracted over to make for a convenient experience.
+
+## Creating and Starting Attempts
+
+Starting an attempt of an existing workflow using `digdag-py` is simple. This is helpful when triggering jobs from API calls to your services.
+
+The steps to start attempts in Digdag are:
+
+1. Retrieve the project the workflow belongs to
+2. Retrieve the workflow from the projects workflows
+3. Create an attempt parameters config from the workflow
+4. Use the client to start the attempt using the attempt parameters
+
+
+### Starting a Simple Attempt
+
+```python
+from digdag_sdk.api.client import DigdagClient
+
+client = DigdagClient(host="<my_digdag_host>")
+
+project = client.get_projects().filter_by_name("test-project")
+
+workflow = client.get_project_workflows(project.id).filter_by_name("print-hello")
+
+attempt_params = workflow.create_attempt_parameters()
+
+started_attempt = client.start_attempt(attempt_params)
+```
+
+
+### Starting an attempt with parameters
+
+```python
+from digdag_sdk.api.client import DigdagClient
+
+client = DigdagClient(host="<my_digdag_host>")
+
+project = client.get_projects().filter_by_name("test-project")
+
+workflow = client.get_project_workflows(project.id).filter_by_name("execute-task")
+
+attempt_params = workflow.create_attempt_parameters(
+    params={
+        'id': 14,
+        'first_name': 'joe',
+    }
+)
+
+started_attempt = client.start_attempt(attempt_params)
+```
+
+Providing a `params` dictionary to the `Workflow.create_attempt_parameters()` method will tell the client to pass the arguments as JSON to the workflow execution. 
+
+Note that this only supports simple types that are supported by YAML. More information can be found in the [Digdag docs](https://docs.digdag.io/workflow_definition.html#using-api)
