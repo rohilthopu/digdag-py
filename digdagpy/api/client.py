@@ -2,7 +2,7 @@ import uuid
 import requests
 from typing import Any
 
-from ..dig.exporters import WorkflowExporter, ProjectExporter
+from ..dig.exporters import ProjectExporter
 from ..dig.models import WorkflowProject
 from .models import (
     Attempts,
