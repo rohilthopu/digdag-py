@@ -85,17 +85,15 @@ The following example uses both for loops and conditional task creation/manipula
 from digdagpy.dig.models import Workflow, WorkflowSchedule, CommandTask, ErrorTask
 
 
-feed_options = (
+tasks = (
     "first_task",
     "second_special_task",
     "third_task",
 )
 
 
-wf = 
-
-for hour_offset, task_name in enumerate(feed_options):
-    start_hour_adjusted = 24 - len(feed_options) + hour_offset - 1
+for hour_offset, task_name in enumerate(tasks):
+    start_hour_adjusted = 24 - len(tasks) + hour_offset - 1
 
     schedule = WorkflowSchedule(
         daily="{}:00:00".format(start_hour_adjusted),
@@ -265,4 +263,39 @@ schedule:
 
 _error:
     sh>: python main.py unlock-deployment second_special_task
+```
+
+### third_task
+
+This task is identical to the first.
+
+```yaml
+timezone: UTC
+
+schedule:
+    daily>: 22:00:00 
+    skip_delayed_by: 1s
+    skip_on_overtime: true
+
++lock-deployment:
+    sh>: python main.py lock-deployment third_task
+
++create:
+    sh>: python main.py create third_task --save
+
++upload:
+    +int:
+        sh>: python main.py upload third_task --source-env prod --destination-env int
+
+    +stg:
+        sh>: python main.py upload third_task --source-env prod --destination-env stg
+
+    +prod:
+        sh>: python main.py upload third_task --source-env prod --destination-env prod
+
++unlock-deployment:
+    sh>: python main.py unlock-deployment third_task
+
+_error:
+    sh>: python main.py unlock-deployment third_task
 ```
