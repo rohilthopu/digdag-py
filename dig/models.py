@@ -18,14 +18,28 @@ class SimpleRetryCondition(BaseModel):
 
 
 class IntervalRetryCondition(SimpleRetryCondition):
+    """
+    High level wrapper for the "_retry" directive of a Digdag workflow.
+    """
+
     interval: int
     interval_type: RetryIntervalType = RetryIntervalType.CONSTANT
 
 
 class Task(BaseModel):
-    exports: dict[str, YamlSupportedType] | None = None
-    tasks: "list[NamedTask]" = Field(default_factory=list)
-    retry_condition: IntervalRetryCondition | SimpleRetryCondition | None = None
+    """
+    Lowest level Task construct wrapper. This should not be used directly.
+    """
+
+    exports: dict[str, YamlSupportedType] | None = Field(
+        default=None,
+    )
+    tasks: "list[NamedTask]" = Field(
+        default_factory=list,
+    )
+    retry_condition: IntervalRetryCondition | SimpleRetryCondition | None = Field(
+        default=None,
+    )
 
     def add_task(self, task: "NamedTask") -> Self:
         self.tasks.append(task)
@@ -33,11 +47,22 @@ class Task(BaseModel):
 
 
 class ParallelTaskConfiguration(BaseModel):
+    """
+    Wrapper for the "_parallel" directive in Digdag.
+
+    One of parallel/limit must be provided if a task is marked as parallel.
+    """
+
     parallel: bool = False
     limit: int | None = None
 
 
 class NamedTask(Task):
+    """
+    Wrapper for groups of tasks. Any task type can be enclosed inside a NamedTask in order to hierarchize a group
+    of tasks based on requirements.
+    """
+
     name: str
 
 
@@ -51,6 +76,14 @@ class RepeatableTask(ParallelTask):
 
 
 class DockerImageConfiguration(BaseModel):
+    """
+    High level wrapper for a Docker image tagging configuration.
+
+    When built, an image will be created with the given name and tagged with the provided tag. "name:tag"
+
+    By default, if a tag is not provided, a UUIDv4 value will be automatically generated.
+    """
+
     name: str
     tag: str = Field(
         default_factory=lambda: str(uuid.uuid4()),
@@ -66,11 +99,23 @@ class DockerImageConfiguration(BaseModel):
 
 
 class DockerVolume(BaseModel):
+    """
+    High level wrapper for the DockerVolume "-v" flag syntax.
+    """
+
     host_path: str
     container_path: str
 
 
 class DockerImage(BaseModel):
+    """
+    High level Docker image creation/start configuration that can be used for project/task execution.
+
+    If a Docker image instance is provided, any command will be executed inside of the running container.
+
+    Additionally, any extra parameters will be explicitly passed to the command using the "-e" env directive.
+    """
+
     configuration: DockerImageConfiguration
     volumes: list[DockerVolume] = Field(default_factory=list)
 
@@ -92,6 +137,8 @@ class DockerImage(BaseModel):
             "session_uuid",
             "session_id",
             "session_time",
+            # The following fields only exist in scheduled jobs. It is possible to pass this information downward from
+            # the WorkflowProject instance but for now, they're being ignore from the environment.
             # "last_session_time",
             # "last_executed_session_time",
             # "next_session_time",
@@ -104,6 +151,8 @@ class DockerImage(BaseModel):
                 )
             )
 
+        # Additionally, pass any extra exports (recursively overwriting values) from the specified exports for
+        # a task/project/workflow.
         if exports is not None:
             for key in exports.keys():
                 parts.append(
@@ -121,24 +170,27 @@ class DockerImage(BaseModel):
 
 class CommandTask(NamedTask):
     """
-    A wrapper for commands that can be executed either directly or indirectly. Commands can be run
-    as shell commands, as dependent workflows, as embedded workflows, or all of the previous options
-    at the same time.
+    A wrapper for the sh>: operator in Digdag.
 
-    :param command: A shell command to be executed. This translates to a "sh>:" command in DigDag.
-    :param dependent_workflow: A workflow file name that the current task depends on. The "require" commands start another workflow
-    as part of the run of the current workflow. This leaves the workflow tracked as part of the current task list rather than
-    as an arbitrarily run task.
-    :param embedded_workflow: A workflow file name (including .dig extension) to be arbitrarily started. The called workflow will not be
-    tracked as a task for the current workflow, and as a result, runs (and fails) independently to the current task.
+    Any valid shell command supported by the system that Digdag is running on is supported.
     """
 
     command: str = Field(
         default=None,
     )
+
+    # Optionally link a DockerImage configuration so that a proper output shell command can be generated when
+    # creating the workflow files. If an image is provided, the provided shell command will be executed inside of
+    # the specific container.
     image: DockerImage | None = Field(
         default=None,
     )
+
+    # Fake functionality since Digdag does not support this.
+
+    # Attempt to support continuing workflow execution when a task fails by piping the output of the
+    # command into nil. As far as the user is concerned, this is just a boolean flag that can be set. The tradeoff
+    # though is that the task will show successful in the Digdag task UI.
     continue_on_failure: bool = Field(
         default=False,
     )
@@ -168,6 +220,13 @@ class CommandTask(NamedTask):
 
 
 class ErrorTask(CommandTask):
+    """
+    Dedicated Task type used for error handling. Note that although the paramaters for this are the same as NamedTask,
+    only the command proeperty will be considered.
+
+    Name is not required. Any names will be overwritten with "_error" in the generated .dig file.
+    """
+
     name: str = Field(default="_error")
 
 
@@ -211,6 +270,16 @@ class CRONSchedule(BaseModel):
 
 
 class WorkflowSchedule(BaseModel):
+    """
+    High level wrapper for possible Workflow schedule options.
+
+    The schedule write priority is based on individual components first, then CRON.
+
+    Ex. Minute Interval -> Hourly -> Daily -> Weekly -> Monthly -> CRON
+
+    CRON scheduling should be specific using the CRONSchedule wrapper.
+    """
+
     daily: str | None = None
     cron: CRONSchedule | None = None
     skip_delayed_by: int | None = 1
@@ -218,6 +287,10 @@ class WorkflowSchedule(BaseModel):
 
 
 class Workflow(NamedTask):
+    """
+    High level construct to wrap any task type into a named Workflow.
+    """
+
     timezone: str = "UTC"
     schedule: WorkflowSchedule | None = None
     error: ErrorTask | None = None
